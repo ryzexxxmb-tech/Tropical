@@ -1,0 +1,41 @@
+name: Build mod from zip
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - dir: v1_21_11
+            java: 21
+            name: tropica-1.21.11
+          - dir: v26_2
+            java: 25
+            name: tropica-26.2
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unpack zip
+        run: |
+          mkdir unpacked
+          unzip -q "$(ls *.zip | head -1)" -d unpacked
+          COMMON=$(find unpacked -maxdepth 3 -type d -name common | head -1)
+          cp -r "$(dirname "$COMMON")" tropica_src
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 9.5.1
+      - name: Build
+        working-directory: tropica_src/${{ matrix.dir }}
+        run: gradle build --no-daemon --stacktrace
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: |
+            tropica_src/${{ matrix.dir }}/build/libs/*.jar
+            !tropica_src/${{ matrix.dir }}/build/libs/*-sources.jar
