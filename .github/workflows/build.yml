@@ -27,7 +27,7 @@ jobs:
           gradle build --no-daemon --console=plain > build.log 2>&1
           code=$?
           echo "===== ОШИБКИ ====="
-          grep -n -E "error:|What went wrong|Caused by|Could not|Execution failed" -A4 build.log | head -80
+          grep -n -E "error:|What went wrong|Caused by|Could not|Execution failed" -A4 build.log | head -250
           exit $code
       - uses: actions/upload-artifact@v4
         with:
