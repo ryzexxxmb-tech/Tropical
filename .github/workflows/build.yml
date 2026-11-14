@@ -5,16 +5,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - dir: v1_21_11
-            java: 21
-            name: tropica-1.21.11
-          - dir: v26_2
-            java: 25
-            name: tropica-26.2
     steps:
       - uses: actions/checkout@v4
       - name: Unpack zip
@@ -26,16 +16,22 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: ${{ matrix.java }}
+          java-version: 25
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: 9.5.1
       - name: Build
-        working-directory: tropica_src/${{ matrix.dir }}
-        run: gradle build --no-daemon --stacktrace
+        working-directory: tropica_src/v26_2
+        run: |
+          set +e
+          gradle build --no-daemon --console=plain > build.log 2>&1
+          code=$?
+          echo "===== ОШИБКИ ====="
+          grep -n -E "error:|What went wrong|Caused by|Could not|Execution failed" -A4 build.log | head -80
+          exit $code
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.name }}
+          name: tropica-26.2
           path: |
-            tropica_src/${{ matrix.dir }}/build/libs/*.jar
-            !tropica_src/${{ matrix.dir }}/build/libs/*-sources.jar
+            tropica_src/v26_2/build/libs/*.jar
+            !tropica_src/v26_2/build/libs/*-sources.jar
